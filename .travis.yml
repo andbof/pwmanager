@@ -1,0 +1,18 @@
+language: python
+python:
+    - "3.4"
+    - "3.5"
+    - "3.6"
+# Python 3.7 is not available as standard in travis CI
+matrix:
+    include:
+        - python: 3.7
+          dist: xenial
+          sudo: true
+install:
+    - pip3 install -U setuptools
+    - pip3 install -r requirements.txt
+script:
+    - python3 -m unittest
+    - pip3 install .
+    - pwmanager -h
