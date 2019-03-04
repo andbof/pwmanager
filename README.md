@@ -18,9 +18,11 @@ The official repository is at github: https://github.com/andbof/pwmanager
 # Basic installation
 
 pwmanager is distributed using python ``setuptools``. You can install directly
-from the github repository using ``pip3``:
+from the github repository using ``pip3`` either system-wide or as your local
+user:
 
     pip3 install git+git://github.com/andbof/pwmanager.git
+    pip3 install --user git+git://github.com/andbof/pwmanager.git
 
 Some options need to be set in the configuration file. A sample
 ``pwmanager.conf`` (``pwmanager.conf.sample``) is included in the package. pip3
