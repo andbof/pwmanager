@@ -13,15 +13,19 @@ licensing details.
 
 # Where to get it
 
-The official repository is at github: https://github.com/andbof/pwmanager
+The latest release is available at PyPI: https://pypi.org/project/pwmanager/
+
+Source code repository is at github: https://github.com/andbof/pwmanager
 
 # Basic installation
 
-pwmanager is distributed using python ``setuptools``. You can install directly
-from the github repository using ``pip3`` either system-wide or as your local
-user:
+Quickest and easiest is to install using ``pip3`` from PyPI as your local user:
 
-    pip3 install git+git://github.com/andbof/pwmanager.git
+    pip3 install --user pwmanager
+
+You can also install the latest development version directly from the github
+repository:
+
     pip3 install --user git+git://github.com/andbof/pwmanager.git
 
 Some options need to be set in the configuration file. A sample
