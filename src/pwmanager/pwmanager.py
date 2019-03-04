@@ -54,6 +54,13 @@ def get_all_passwords(datapath):
     return accounts
 
 
+def gpg_find_key(gpg, fp):
+    for key in gpg.gpg.list_keys():
+        if key['fingerprint'] == fp:
+            return key
+
+    return None
+
 def get_all_pubkeys(cfg):
     """
     Return dict {"email": ["public key in PEM format",...]}
@@ -66,11 +73,11 @@ def get_all_pubkeys(cfg):
                 use_agent=cfg['gnupg'].getboolean('use_agent')) as gpg:
             for fp in cfg['global']['keys'].split(','):
                 debug('Fetching public key with fingerprint {} (from configuration file)'.format(fp))
-                key_dict = gpg.gpg.list_keys(fp)
-                if len(key_dict) != 1:
+                key = gpg_find_key(gpg, fp)
+                if key is None:
                     sys.exit('Key with fingerprint {} not found'.format(fp))
 
-                uid = key_dict[0]['uids'][0]
+                uid = key['uids'][0]
                 key_data = gpg.gpg.export_keys(fp)
                 if not uid in r:
                     r[uid] = []

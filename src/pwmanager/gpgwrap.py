@@ -84,3 +84,9 @@ class GPG():
         with open(path, 'rb') as f:
             data = f.read()
         return self.decrypt(data, homedir, use_agent)
+
+    def find_key(self, fp):
+        for key in self.gpg.list_keys():
+            if key['fingerprint'] == fp:
+                return key
+        return None
