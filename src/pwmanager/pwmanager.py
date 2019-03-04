@@ -63,7 +63,7 @@ def get_all_pubkeys(cfg):
 
     if 'keys' in cfg['global']:
         with GPG(gnupghome=cfg['gnupg']['home'],
-                use_agent=cfg['gnupg']['use_agent']) as gpg:
+                use_agent=cfg['gnupg'].getboolean('use_agent')) as gpg:
             for fp in cfg['global']['keys'].split(','):
                 debug('Fetching public key with fingerprint {} (from configuration file)'.format(fp))
                 key_dict = gpg.gpg.list_keys(fp)
