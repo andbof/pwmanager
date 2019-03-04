@@ -9,7 +9,7 @@ DEFAULT_CONF = os.path.join(DEFAULT_CONF_DIR, 'pwmanager.conf')
 DEFAULT_DATA_DIR = os.path.join(DEFAULT_CONF_DIR, 'data')
 DEFAULT_GNUPG_HOME = os.path.join(os.getenv('HOME'), '.gnupg')
 
-def config(path):
+def parse(path):
     replace = {
             '{CONFDIR}': os.path.dirname(path),
             '{HOME}': os.getenv('HOME'),
