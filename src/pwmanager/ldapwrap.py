@@ -15,10 +15,10 @@ def get_dn_attribute(conn, dn, filtr, attr):
     if r == False or len(conn.entries) != 1:
         raise RuntimeError("dn '{}' filter '{}' return did not return exactly one hit".format(
             dn, filtr))
-    d = conn.entries[0].entry_get_attributes_dict()
-    if attr not in d:
+
+    if attr not in conn.entries[0]:
         return []
-    return [x for x in d[attr]]
+    return [x for x in conn.entries[0][attr]]
 
 
 def get_one_dn_attribute(conn, dn, filtr, attr):
