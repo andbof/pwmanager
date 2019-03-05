@@ -38,11 +38,6 @@ The standard location for your password repository is ``$HOME/.pwmanager/data``
 pwmanager requires python3 >= 3.4 and some extra packages, see ``setup.py`` for
 details. Python 2.x is not supported.
 
-If pip3 crashes with an error message related to ``find_namespace_packages``,
-you must upgrade setuptools:
-
-    pip3 install -U setuptools
-
 # Using it
 
 ## Getting help
