@@ -3,7 +3,7 @@
 import atexit
 import os
 from pkg_resources import resource_string
-from setuptools import setup, find_namespace_packages
+from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 project_name = 'pwmanager'
@@ -30,7 +30,7 @@ setup(
         keywords = "password manager gpg gnupg ldap",
         url = "https://github.com/andbof/pwmanager",
         package_dir = {'': 'src'},
-        packages = find_namespace_packages(where='src'),
+        packages = find_packages('src'),
         package_data = {
             'pwmanager': ['data/*'],
         },
