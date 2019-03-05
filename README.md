@@ -5,8 +5,8 @@
 pwmanager is a python script for storing passwords, searchable by hostname and
 user, in a gnupg encrypted git backed database. It can encrypt to multiple keys
 and also fetch keys from LDAP, allowing you to easily and securely share and
-version control passwords with others. This might be useful whenever multiple
-people need to share passwords with one another.
+version control passwords with others. Useful for both personal and group-wide
+password storage and sharing.
 
 Copyright (C) 2019 Andreas Bofjäll <andreas@gazonk.org>, see LICENSE for
 licensing details.
