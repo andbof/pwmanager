@@ -54,7 +54,7 @@ def get_all_passwords(datapath):
     return accounts
 
 
-def get_all_pubkeys(fps, ldap, gnupghome, use_agent):
+def get_all_pubkeys(fps, ldap, use_agent, gnupghome):
     """
     Return dict {"email": ["public key in PEM format",...]}
     """
@@ -114,20 +114,22 @@ def attempt_retry(fnc, *args, **kwargs):
             time.sleep(0.5)
 
 
+def do_add(datapath, path, host, user, encpw, exist_ok):
+    git = Git(datapath)
+    with GitTransaction(git):
+        if git.has_origin():
+            git.rebase_origin_master()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        write_password(path, encpw, exist_ok)
+        git.add(path)
+        git.commit("{}/{}: {}\n\n{}".format(
+            host, user, 'replace' if exist_ok else 'add',
+            get_version()))
+        if git.has_origin():
+            git.push_master()
+
+
 def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
-    def do_add(path, host, user, encpw, exist_ok):
-        git = Git(datapath)
-        with GitTransaction(git):
-            if git.has_origin():
-                git.rebase_origin_master()
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            write_password(path, encpw, exist_ok)
-            git.add(path)
-            git.commit("{}/{}: {}\n\n{}".format(
-                host, user, 'replace' if exist_ok else 'add',
-                get_version()))
-            if git.has_origin():
-                git.push_master()
 
     accounts = get_all_passwords(datapath)
 
@@ -156,7 +158,7 @@ def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
         encpw = gpg.encrypt('{}\n'.format(new_pass))
 
     path = hostuser_to_path(datapath, host, user)
-    attempt_retry(do_add, path, host, user, encpw, exist_ok)
+    attempt_retry(do_add, datapath, path, host, user, encpw, exist_ok)
     return gpg.get_num_recipients()
 
 
@@ -167,8 +169,8 @@ def add_pw(cfg, args, exist_ok=False):
     else:
         ldap = cfg['ldap']
 
-    keys = get_all_pubkeys(fingerprints, ldap, cfg['gnupg']['home'],
-            cfg['gnupg'].getboolean('use_agent'))
+    keys = get_all_pubkeys(fingerprints, ldap,
+            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
 
     r = _add_pw(args.host, args.user, args.password, cfg['global']['datapath'],
             keys, exist_ok, cfg['gnupg']['home'])
@@ -269,8 +271,50 @@ def list_same(a, b):
     return True
 
 
-def sync(cfg, host, user, _):
-    sys.exit('Not implemented yet')
+def _sync_pws(datapath, force, dec_gpg, enc_gpg):
+    accounts = get_all_passwords(datapath)
+
+    num = 0
+    for (host, user, path) in accounts.iterate():
+        if force or enc_gpg.get_file_recipients(path) != enc_gpg.get_recipient_fps():
+            debug('Need to reencrypt {}'.format(path))
+            pw = enc_gpg.encrypt(dec_gpg.decrypt_file(path))
+            attempt_retry(do_add, datapath, path, host, user, pw, True)
+            num += 1
+    return num
+
+
+def sync_pws(cfg, args):
+    fingerprints = cfg['global'].get('keys', '').split(',')
+    if not 'ldap' in cfg:
+        ldap = None
+    else:
+        ldap = cfg['ldap']
+
+    keys = get_all_pubkeys(fingerprints, ldap,
+            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
+
+    with GPG(use_agent=False) as enc_gpg:
+        for email, fps in keys.items():
+            debug('Encrypting to {} ({} key{})'.format(
+                email, len(fps), 's' if len(keys) > 1 else ''))
+            for fp in fps:
+                enc_gpg.add_recipient(fp)
+
+        with GPG(use_agent=cfg['gnupg'].getboolean('use_agent'),
+                gnupghome=cfg['gnupg']['home']) as dec_gpg:
+            if not cfg['gnupg'].getboolean('use_agent'):
+                # gpg-agent should automatically popup a different password dialog so
+                # we should only ask for the password if we're not using it
+                dec_gpg.set_passphrase(args.gnupgpass)
+
+            num = _sync_pws(cfg['global']['datapath'], args.force, dec_gpg, enc_gpg)
+
+    if num == 0:
+        print("No synchronization necessary, recipient lists were correct.")
+    else:
+        print("Successfully reencrypted {} passwords to {} recipients".format(
+            num, enc_gpg.get_num_recipients()))
 
 
 def init_git(cfg, args):
@@ -364,9 +408,16 @@ actions = {
         },
         'sync': {
             'help': 'Go through all passwords and reencrypt to all configured public key (and noone else)',
-            'method': sync,
+            'method': sync_pws,
             'pos_args': [],
-            'opt_args': {},
+            'opt_args': {
+                '-f': {
+                    'long': '--force',
+                    'action': 'store_true',
+                    'default': False,
+                    'help': 'Always reencrypt all passwords (do not care about existing recipient list)',
+                },
+            },
         },
         'init': {
             'help': 'Initialize the datastore git repository',
@@ -413,8 +464,7 @@ def parse_cmdline(actions):
                     type=arg[1]['type'], metavar=arg[1]['metavar'])
         for _name, _val in sorted(val['opt_args'].items()):
             p.add_argument(_name, _val['long'],
-                    action=_val['action'], help=_val['help'],
-                    type=_val['type'], metavar=_val['metavar'])
+                    action=_val['action'], help=_val['help'])
 
     args = parser.parse_args()
     if args.action is None:

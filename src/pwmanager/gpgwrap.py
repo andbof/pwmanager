@@ -7,6 +7,7 @@ import os
 from pwmanager.debug import debug
 import shutil
 import stat
+import subprocess
 import tempfile
 
 class GPG():
@@ -47,6 +48,9 @@ class GPG():
         if (r.count != 1):
             raise RuntimeError("Key import failed")
         self.encrypt_to.append(r.fingerprints[0])
+
+    def get_recipient_fps(self):
+        return self.encrypt_to
 
     def get_num_recipients(self):
         return len(self.encrypt_to)
@@ -90,3 +94,35 @@ class GPG():
             if key['fingerprint'] == fp:
                 return key
         return None
+
+    def keyids_to_fps(self, keyids):
+        table = {}
+        for key in self.gpg.list_keys():
+            for d in key['subkey_info'].values():
+                if d['keyid']:
+                    table[d['keyid']] = key['fingerprint']
+
+        fps = []
+        for keyid in keyids:
+            if not keyid in table:
+                raise RuntimeError('No fingerprint for key ID {}'.format(keyid))
+            fps.append(table[keyid])
+        return fps
+
+    def get_file_recipients(self, path):
+        """
+        Returns a list of the fingerprints for the recipients of the gpg
+        encrypted file at path. Since python-gnupg does not seem to support
+        this, it calls gpg manually and parses the text output.
+
+        Would rather do it some other way.
+        """
+        keyids = []
+        data = subprocess.check_output([self.gpg.gpgbinary, "--pinentry-mode", "error", "--homedir", self.gnupghome,
+            "--list-only", "--list-packets", path], stderr=subprocess.STDOUT)
+        for line in data.decode('utf-8').split('\n'):
+            if not line.startswith(':pubkey enc packet:'):
+                continue
+            (_, keyid) = line.split('keyid ')
+            keyids.append(keyid)
+        return self.keyids_to_fps(keyids)
