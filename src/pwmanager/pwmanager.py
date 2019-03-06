@@ -54,33 +54,30 @@ def get_all_passwords(datapath):
     return accounts
 
 
-def get_all_pubkeys(cfg):
+def get_all_pubkeys(fps, ldap, gnupghome, use_agent):
     """
     Return dict {"email": ["public key in PEM format",...]}
     """
 
     r = {}
 
-    if 'keys' in cfg['global']:
-        with GPG(gnupghome=cfg['gnupg']['home'],
-                use_agent=cfg['gnupg'].getboolean('use_agent')) as gpg:
-            for fp in cfg['global']['keys'].split(','):
-                debug('Fetching public key with fingerprint {} (from configuration file)'.format(fp))
-                key = gpg.find_key(fp)
-                if key is None:
-                    sys.exit('Key with fingerprint {} not found'.format(fp))
+    with GPG(use_agent, gnupghome) as gpg:
+        for fp in fps:
+            debug('Fetching public key with fingerprint {} (from configuration file)'.format(fp))
+            key = gpg.find_key(fp)
+            if key is None:
+                sys.exit('Key with fingerprint {} not found'.format(fp))
 
-                uid = key['uids'][0]
-                key_data = gpg.gpg.export_keys(fp)
-                if not uid in r:
-                    r[uid] = []
-                r[uid].append(base64.b64encode(key_data.encode('utf-8')))
+            uid = key['uids'][0]
+            key_data = gpg.gpg.export_keys(fp)
+            if not uid in r:
+                r[uid] = []
+            r[uid].append(base64.b64encode(key_data.encode('utf-8')))
 
-    if 'ldap' in cfg:
+    if ldap is not None:
         debug('Fetching public keys from LDAP')
         try:
-            r.update(get_ldap_group_keys(cfg,
-                cfg['ldap'].get('bind_pw',
+            r.update(get_ldap_group_keys(ldap, ldap.get('bind_pw',
                     getpass.getpass(prompt='LDAP password:')))
             )
         except RuntimeError as e:
@@ -117,9 +114,9 @@ def attempt_retry(fnc, *args, **kwargs):
             time.sleep(0.5)
 
 
-def add_pw(cfg, args, exist_ok=False):
+def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
     def do_add(path, host, user, encpw, exist_ok):
-        git = Git(cfg['global']['datapath'])
+        git = Git(datapath)
         with GitTransaction(git):
             if git.has_origin():
                 git.rebase_origin_master()
@@ -132,51 +129,58 @@ def add_pw(cfg, args, exist_ok=False):
             if git.has_origin():
                 git.push_master()
 
-    accounts = get_all_passwords(cfg['global']['datapath'])
+    accounts = get_all_passwords(datapath)
 
-    if not exist_ok and accounts.exists(args.host, args.user):
+    if not exist_ok and accounts.exists(host, user):
         sys.exit("Account {} on {} already exists, use replace instead.".format(
-            args.user, args.host))
+            user, host))
 
-    email_keys = get_all_pubkeys(cfg)
-
-    if args.password is None:
+    if password is None:
         new_pass = getpass.getpass('Enter password to store:')
         if getpass.getpass('Enter it again to verify:') != new_pass:
             sys.exit("Passwords don't match.")
     else:
-        new_pass = args.password
+        new_pass = password
 
     # We are only encrypting and using different keyrings, so do not use the
     # users gpg-agent even if we were instructed to do so.
-    with GPG(use_agent=False) as gpg:
-        for email, keys in email_keys.items():
+    with GPG(False, gnupghome) as gpg:
+        for email, fp_list in keys.items():
             debug('Encrypting to {} ({} key{})'.format(
-                email, len(keys), 's' if len(keys) > 1 else ''))
-            for key in keys:
-                gpg.add_recipient(key)
+                email, len(fp_list), 's' if len(fp_list) > 1 else ''))
+            for fp in fp_list:
+                gpg.add_recipient(fp)
 
         # Adding a trailing newline makes it prettier if someone decodes using
         # regular command line gnupg.
         encpw = gpg.encrypt('{}\n'.format(new_pass))
 
-    path = hostuser_to_path(cfg['global']['datapath'], args.host, args.user)
-    attempt_retry(do_add, path, args.host, args.user, encpw, exist_ok)
+    path = hostuser_to_path(datapath, host, user)
+    attempt_retry(do_add, path, host, user, encpw, exist_ok)
+    return gpg.get_num_recipients()
 
+
+def add_pw(cfg, args, exist_ok=False):
+    fingerprints = cfg['global'].get('keys', '').split(',')
+    if not 'ldap' in cfg:
+        ldap = None
+    else:
+        ldap = cfg['ldap']
+
+    keys = get_all_pubkeys(fingerprints, ldap, cfg['gnupg']['home'],
+            cfg['gnupg'].getboolean('use_agent'))
+
+    r = _add_pw(args.host, args.user, args.password, cfg['global']['datapath'],
+            keys, exist_ok, cfg['gnupg']['home'])
     print("Successfully encrypted password for {}/{} to {} recipient{}.".format(
-        args.host, args.user, len(email_keys), 's' if len(keys) > 1 else ''))
+        args.host, args.user, r, 's' if r > 1 else ''))
 
 
-def _get_pwds(cfg, gpg, host, user, gnupgpass):
-    accounts = get_all_passwords(cfg['global']['datapath'])
+def _get_pwds(datapath, gpg, host, user):
+    accounts = get_all_passwords(datapath)
     matches = accounts.search(host, user)
     if not matches:
         return []
-
-    if not cfg['gnupg'].getboolean('use_agent'):
-        # gpg-agent should automatically popup a different password dialog so
-        # we should only ask for the password if we're not using it
-        gpg.set_passphrase(gnupgpass)
 
     r = []
     for h, u in matches:
@@ -187,17 +191,23 @@ def _get_pwds(cfg, gpg, host, user, gnupgpass):
     return r
 
 
-def get_pwds(cfg, host, user, gnupgpass):
-    with GPG(gnupghome=cfg['gnupg']['home'],
-            use_agent=cfg['gnupg'].getboolean('use_agent')) as gpg:
-        return _get_pwds(cfg, gpg, host, user, gnupgpass)
+def get_pwds(host, user, datapath, use_agent, gnupghome, gnupgpass):
+    with GPG(use_agent, gnupghome) as gpg:
+        if not use_agent:
+            # gpg-agent should automatically popup a different password dialog so
+            # we should only ask for the password if we're not using it
+            gpg.set_passphrase(gnupgpass)
+
+        return _get_pwds(datapath, gpg, host, user)
 
 
 def get_pw(cfg, args):
     def print_row(a, b, c):
         print('{:20s} {:16s} {:20s}'.format(a, b, c))
 
-    pwds = get_pwds(cfg, args.host, args.user, args.gnupgpass)
+    pwds = get_pwds(args.host, args.user, cfg['global']['datapath'],
+            cfg['gnupg']['use_agent'], cfg['gnupg']['home'], args.gnupgpass)
+
     if not pwds:
         print("No matches for host '{}' {}".format(args.host,
             "and user '{}'".format(args.user) if args.user is not None else ''))
@@ -214,34 +224,36 @@ def get_pw(cfg, args):
             print_row(x[0], x[1], x[2].rstrip())
 
 
-def rm_pw(cfg, args):
+def _rm_pw(datapath, host, user, pwfile):
     def do_rm(pwfile, host, user):
-        git = Git(cfg['global']['datapath'])
+        git = Git(datapath)
         with GitTransaction(git):
             if git.has_origin():
                 git.rebase_origin_master()
             git.rm(pwfile)
             git.commit("{}/{}: remove\n\n{}".format(
-                args.host, args.user, get_version()))
+                host, user, get_version()))
             if git.has_origin():
                 git.push_master()
 
-    accounts = get_all_passwords(cfg['global']['datapath'])
-    if not accounts.exists(args.host, args.user):
-        sys.exit("User {} on args.host {} does not exist".format(args.user, args.host))
+    debug("Removing password for account '{}/{}'".format(host, user))
 
-    debug("Removing password for account '{}/{}'".format(args.host, args.user))
-
-    pwfile = accounts.get(args.host, args.user)
-    attempt_retry(do_rm, pwfile, args.host, args.user)
+    attempt_retry(do_rm, pwfile, host, user)
     try:
         os.rmdir(os.path.dirname(pwfile))
     except OSError as e:
         if e.errno == errno.ENOTEMPTY:
-            debug("More accounts exist for '{}', not removing args.host".format(args.host))
+            debug("More accounts exist for '{}', not removing host".format(host))
     else:
-        debug("No more accounts exist for '{}', args.host removed".format(args.host))
+        debug("No more accounts exist for '{}', host removed".format(host))
 
+
+def rm_pw(cfg, args):
+    accounts = get_all_passwords(cfg['global']['datapath'])
+    if not accounts.exists(args.host, args.user):
+        sys.exit("User {} on args.host {} does not exist".format(args.user, args.host))
+    pwfile = accounts.get(args.host, args.user)
+    _rm_pw(cfg['global']['datapath'], args.host, args.user, pwfile)
     print("Password for user {} on host {} removed".format(args.user, args.host))
 
 

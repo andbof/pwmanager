@@ -84,21 +84,24 @@ class TestManage(unittest.TestCase):
             f.write('testfile')
 
     @staticmethod
-    def get_testkey(args):
+    def get_testkey(*args, **kwargs):
         return {'test@example.com': [testkey['public']]}
 
     def ensure_acc_exists(self, password=None):
         if password is None:
             password = self.def_args.password
-        self.assertEqual(pwmanager.get_pwds(self.def_config, self.def_args.host,
-            self.def_args.user, self.def_args.gnupgpass),
+        self.assertEqual(pwmanager._get_pwds(
+                self.def_config['global']['datapath'], self.gpg,
+                self.def_args.host, self.def_args.user),
                 [(self.def_args.host, self.def_args.user,
                     "{}\n".format(password))]
         )
 
     def ensure_acc_not_exists(self):
-        self.assertEqual(pwmanager.get_pwds(self.def_config, self.def_args.host,
-            self.def_args.user, self.def_args.gnupgpass), [])
+        self.assertEqual(pwmanager._get_pwds(
+                self.def_config['global']['datapath'], self.gpg,
+                self.def_args.host, self.def_args.user),
+                [])
 
     def test_add(self):
         # This should call pwmanager.add_pw() in the same way as it is called
@@ -108,10 +111,10 @@ class TestManage(unittest.TestCase):
 
     def test_add_twice(self):
         self.ensure_acc_not_exists()
-        pwmanager.add_pw(self.def_config, self.def_args, False)
+        pwmanager.add_pw(self.def_config, self.def_args)
         self.ensure_acc_exists()
         with self.assertRaises(SystemExit):
-            pwmanager.add_pw(self.def_config, self.def_args, False)
+            pwmanager.add_pw(self.def_config, self.def_args)
         self.ensure_acc_exists()
 
     def test_rm_nonexisting(self):
@@ -123,7 +126,7 @@ class TestManage(unittest.TestCase):
 
     def test_rm(self):
         self.ensure_acc_not_exists()
-        pwmanager.add_pw(self.def_config, self.def_args, False)
+        pwmanager.add_pw(self.def_config, self.def_args)
         self.ensure_acc_exists()
         pwmanager.rm_pw(self.def_config, self.def_args)
         self.ensure_acc_not_exists()
@@ -133,7 +136,7 @@ class TestManage(unittest.TestCase):
 
     def test_replace(self):
         self.ensure_acc_not_exists()
-        pwmanager.add_pw(self.def_config, self.def_args, False)
+        pwmanager.add_pw(self.def_config, self.def_args)
         self.ensure_acc_exists()
         new_args = copy.copy(self.def_args)
         new_args.update(password='other')

@@ -37,7 +37,7 @@ def get_group_members(conn, group_dn):
             '(objectClass=posixGroup)', 'memberUid')
 
 
-def get_user_keydns(conn, config, uids):
+def get_user_keydns(conn, ldap, uids):
     """
     Grab owner name + email and corresponding key attribute (e.g. fdUserKeyDN)
     records from LDAP. The key attribute should match into key_dn (e.g. "ou=PGP
@@ -47,19 +47,19 @@ def get_user_keydns(conn, config, uids):
     for uid in uids:
         key_dns = get_dn_attribute(conn,
             '{}={},{}'.format(
-                config['ldap']['user_attr'], uid, config['ldap']['base_dn']),
-            '(objectClass=person)', config['ldap']['key_attr'])
+                ldap['user_attr'], uid, ldap['base_dn']),
+            '(objectClass=person)', ldap['key_attr'])
         if not key_dns:
             # Not all members may have a GPG key registered
             continue
         email = get_one_dn_attribute(conn,
             '{}={},{}'.format(
-                config['ldap']['user_attr'], uid, config['ldap']['base_dn']),
-            '(objectClass=person)', config['ldap']['mail_attr'])
+                ldap['user_attr'], uid, ldap['base_dn']),
+            '(objectClass=person)', ldap['mail_attr'])
         name = get_one_dn_attribute(conn,
             '{}={},{}'.format(
-                config['ldap']['user_attr'], uid, config['ldap']['base_dn']),
-            '(objectClass=person)', config['ldap']['name_attr'])
+                ldap['user_attr'], uid, ldap['base_dn']),
+            '(objectClass=person)', ldap['name_attr'])
         owner = '{} <{}>'.format(name, email)
         if not owner in r:
             r[owner] = []
@@ -92,23 +92,23 @@ def flatten(lists):
     return [x for sublist in lists for x in sublist]
 
 
-def get_ldap_group_keys(config, pw):
+def get_ldap_group_keys(ldap, pw):
     """
     Return a dict
         {"firstname lastname <email@domain>": "base64 encoded pgp key"}
     for all members of the configured LDAP group.
     """
     tls_conf = ldap3.Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2,
-            ca_certs_file=config['ldap']['ca_cert'])
-    srv = ldap3.Server(config['ldap']['server'], port=config['ldap'].getint('port'),
-            use_ssl=config['ldap'].getboolean('use_ssl'), tls=tls_conf)
+            ca_certs_file=ldap['ca_cert'])
+    srv = ldap3.Server(ldap['server'], port=ldap.getint('port'),
+            use_ssl=ldap.getboolean('use_ssl'), tls=tls_conf)
 
-    with ldap3.Connection(srv, config['ldap']['bind_dn'], pw) as l:
+    with ldap3.Connection(srv, ldap['bind_dn'], pw) as l:
         if not l.bind():
             raise RuntimeError('Could not bind to LDAP, wrong password?')
 
-        members = sorted(get_group_members(l, config['ldap']['group_dn']))
-        key_dns = get_user_keydns(l, config, members)
+        members = sorted(get_group_members(l, ldap['group_dn']))
+        key_dns = get_user_keydns(l, ldap, members)
         keys = get_gpg_keys(l, flatten(key_dns.values()))
 
     user_keys = {}

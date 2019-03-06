@@ -48,6 +48,9 @@ class GPG():
             raise RuntimeError("Key import failed")
         self.encrypt_to.append(r.fingerprints[0])
 
+    def get_num_recipients(self):
+        return len(self.encrypt_to)
+
     def encrypt(self, data):
         if not self.encrypt_to:
             raise RuntimeError("No recipients to encrypt to!")
