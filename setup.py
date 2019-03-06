@@ -1,10 +1,7 @@
 #!/usr/bin/python3
 
-import atexit
 import os
-from pkg_resources import resource_string
 from setuptools import setup, find_packages
-from setuptools.command.install import install
 
 project_name = 'pwmanager'
 
