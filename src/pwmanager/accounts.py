@@ -56,3 +56,8 @@ class Accounts():
                     continue
                 r.append((host, user))
         return r
+
+    def iterate(self):
+        for host, users in self.accounts.items():
+            for user, path in users.items():
+                yield (host, user, path)

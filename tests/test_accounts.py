@@ -73,6 +73,26 @@ class TestAccounts(unittest.TestCase):
             ('xhostx', 'xuserx'),
         ])
 
+    def test_iter(self):
+        tests = [
+                ('host1', 'user1', 'path1'),
+                ('host2', 'user1', 'path2'),
+                ('host2', 'user2', 'path3'),
+                ('host3', 'user1', 'path4'),
+                ('host3', 'user2', 'path5'),
+                ('host3', 'user3', 'path6'),
+        ]
+        pwds = Accounts()
+        for (h, u, p) in tests:
+            pwds.add(h, u, p)
+
+        r = []
+        for a in pwds.iterate():
+            r.append(a)
+
+        self.assertCountEqual(r, tests)
+
+
 
 if __name__ == '__main__':
     unittest.main()
