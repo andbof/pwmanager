@@ -33,17 +33,17 @@ class TestGPG(unittest.TestCase):
         self.gpg.add_recipient(testkey['public'])
         blob = self.gpg.encrypt(data)
         with self.assertRaises(RuntimeError):
-            self.gpg.decrypt(blob, self.gpg.tempdir, use_agent=False)
+            self.gpg.decrypt(blob)
         with self.assertRaises(RuntimeError):
             self.gpg.set_passphrase(testkey['passphrase'])
-            self.gpg.decrypt(blob, self.gpg.tempdir, use_agent=False)
+            self.gpg.decrypt(blob)
 
     def test_encrypt_decrypt(self):
         data = str(os.urandom(1024))
         self.gpg.add_recipient(testkey['private'])
         blob = self.gpg.encrypt(data)
         self.gpg.set_passphrase(testkey['passphrase'])
-        out = self.gpg.decrypt(blob, self.gpg.tempdir, use_agent=False)
+        out = self.gpg.decrypt(blob)
         self.assertEqual(data, out)
 
     def test_encrypt_decrypt_file(self):
@@ -54,7 +54,7 @@ class TestGPG(unittest.TestCase):
         with open(path, 'xb') as f:
             f.write(blob)
         self.gpg.set_passphrase(testkey['passphrase'])
-        out = self.gpg.decrypt_file(path, self.gpg.tempdir, use_agent=False)
+        out = self.gpg.decrypt_file(path)
         self.assertEqual(data, out)
 
 

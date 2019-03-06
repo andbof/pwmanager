@@ -63,27 +63,24 @@ class GPG():
             debug('Passphrase already supplied')
         self.passphrase = pw
 
-    def decrypt(self, data, homedir, use_agent):
-        # When decrypting, we most often want gnupghome to be $HOME/.gnupg
-        # since that's likely where the users' secret key is.
-        gpg = gnupg.GPG(gnupghome=homedir, use_agent=use_agent)
-        if not use_agent:
+    def decrypt(self, data):
+        debug('Decrypting using gnupg homedir {}'.format(self.gnupghome))
+        if not self.use_agent:
             if self.passphrase is None:
                 raise RuntimeError("No GPG password set")
-            r = gpg.decrypt(data, passphrase=self.passphrase)
+            r = self.gpg.decrypt(data, passphrase=self.passphrase)
         else:
-            r = gpg.decrypt(data)
+            r = self.gpg.decrypt(data)
 
         if not r.ok:
             raise RuntimeError("Decryption failed ({})".format(r.status))
         return str(r)
 
-    def decrypt_file(self, path, homedir, use_agent):
-        debug('Trying to decrypt {} (gnupg homedir {})'.format(path,
-            homedir))
+    def decrypt_file(self, path):
+        debug('Trying to decrypt file {}'.format(path))
         with open(path, 'rb') as f:
             data = f.read()
-        return self.decrypt(data, homedir, use_agent)
+        return self.decrypt(data)
 
     def find_key(self, fp):
         for key in self.gpg.list_keys():

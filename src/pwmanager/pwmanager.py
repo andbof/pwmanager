@@ -188,8 +188,7 @@ def _get_pwds(cfg, gpg, host, user, gnupgpass):
     r = []
     for h, u in matches:
         try:
-            r.append((h, u, gpg.decrypt_file(accounts.get(h, u),
-                cfg['gnupg']['home'], cfg['gnupg'].getboolean('use_agent'))))
+            r.append((h, u, gpg.decrypt_file(accounts.get(h, u))))
         except RuntimeError:
             sys.exit('Decryption failed. Check password and availability of secret key.')
     return r
