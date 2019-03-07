@@ -114,14 +114,18 @@ def attempt_retry(fnc, *args, **kwargs):
             time.sleep(0.5)
 
 
+def write_and_add(git, path, encpw, exist_ok):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    write_password(path, encpw, exist_ok)
+    git.add(path)
+
+
 def do_add(datapath, path, host, user, encpw, exist_ok):
     git = Git(datapath)
     with GitTransaction(git):
         if git.has_origin():
             git.rebase_origin_master()
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        write_password(path, encpw, exist_ok)
-        git.add(path)
+        write_and_add(git, path, encpw, exist_ok)
         git.commit("{}/{}: {}\n\n{}".format(
             host, user, 'replace' if exist_ok else 'add',
             get_version()))
@@ -280,13 +284,26 @@ def list_same(a, b):
 def _sync_pws(datapath, force, dec_gpg, enc_gpg):
     accounts = get_all_passwords(datapath)
 
-    num = 0
-    for (host, user, path) in accounts.iterate():
-        if force or enc_gpg.get_file_recipients(path) != enc_gpg.get_recipient_fps():
-            debug('Need to reencrypt {}'.format(path))
-            pw = enc_gpg.encrypt(dec_gpg.decrypt_file(path))
-            attempt_retry(do_add, datapath, path, host, user, pw, True)
-            num += 1
+    git = Git(datapath)
+    with GitTransaction(git):
+        num = 0
+        if git.has_origin():
+            git.rebase_origin_master()
+        for (host, user, path) in accounts.iterate():
+            if force or enc_gpg.get_file_recipients(path) != enc_gpg.get_recipient_fps():
+                debug('Need to reencrypt {}'.format(path))
+                encpw = enc_gpg.encrypt(dec_gpg.decrypt_file(path))
+                write_and_add(git, path, encpw, True)
+                num += 1
+
+        if num > 0:
+            uids = ''.join(['    - {}\n'.format(x) for x in enc_gpg.get_recipient_uids()])
+            git.commit("Synchronized and reencrypted {} passwords to {} recipient{}{}:\n{}\n\n{}".format(
+                num, enc_gpg.get_num_recipients(), 's' if enc_gpg.get_num_recipients() > 1 else '',
+                ' (forced)' if force else '', uids, get_version())
+            )
+            if git.has_origin():
+                git.push_master()
     return num
 
 
@@ -313,7 +330,8 @@ def sync_pws(cfg, args):
                 # we should only ask for the password if we're not using it
                 dec_gpg.set_passphrase(args.gnupgpass)
 
-            num = _sync_pws(cfg['global']['datapath'], args.force, dec_gpg, enc_gpg)
+            num = attempt_retry(_sync_pws, cfg['global']['datapath'], args.force,
+                    dec_gpg, enc_gpg)
 
     if num == 0:
         print("No synchronization necessary, recipient lists were correct.")
