@@ -50,8 +50,18 @@ class GPG():
         # There doesn't seem to be a good way of getting the key metadata
         # without reading it back after importing it
         key = self.find_key(r.fingerprints[0])
+        # We are using latin1 as the default encoding for gpg because some
+        # uids are in latin1 encoding and would throw exceptions if we
+        # assumed they were utf-8. Unfortunately, this means e.g. some
+        # names will not be displayed correctly here. Since we don't know
+        # the original encoding, try to interpret them as latin1, but as a
+        # fallback assume utf-8 if it fails.
+        try:
+            uid = key['uids'][0].encode('latin-1').decode('utf-8')
+        except UnicodeDecodeError:
+            uid = key['uids'][0]
         self.encrypt_to.append({
-            'uid': key['uids'][0],
+            'uid': uid,
             'keyid': [x['keyid'] for x in key['subkey_info'].values()],
             'fp': r.fingerprints[0],
         })
