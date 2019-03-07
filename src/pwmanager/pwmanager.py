@@ -214,7 +214,7 @@ def get_pw(cfg, args):
         print('{:20s} {:16s} {:20s}'.format(a, b, c))
 
     pwds = get_pwds(args.host, args.user, cfg['global']['datapath'],
-            cfg['gnupg']['use_agent'], cfg['gnupg']['home'], args.gnupgpass)
+            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'], args.gnupgpass)
 
     if not pwds:
         print("No matches for host '{}' {}".format(args.host,
