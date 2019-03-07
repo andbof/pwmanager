@@ -29,6 +29,50 @@ class TestAccounts(unittest.TestCase):
         with self.assertRaises(KeyError):
             pwds.add('a', 'b', 'c')
 
+    def test_capitalize(self):
+        pwds = Accounts()
+
+        pwds.add('a', 'b', 'c')
+        self.assertTrue(pwds.exists('a', 'b'))
+        self.assertTrue(pwds.exists('A', 'b'))
+        self.assertTrue(pwds.exists('a', 'B'))
+        self.assertTrue(pwds.exists('A', 'B'))
+        with self.assertRaises(KeyError):
+            pwds.add('a', 'b', 'c')
+        with self.assertRaises(KeyError):
+            pwds.add('A', 'b', 'c')
+        with self.assertRaises(KeyError):
+            pwds.add('a', 'B', 'c')
+        with self.assertRaises(KeyError):
+            pwds.add('A', 'B', 'c')
+
+        pwds.rm('A', 'B')
+        self.assertFalse(pwds.exists('a', 'b'))
+        self.assertFalse(pwds.exists('A', 'b'))
+        self.assertFalse(pwds.exists('a', 'B'))
+        self.assertFalse(pwds.exists('A', 'B'))
+
+        pwds.add('A', 'B', 'c')
+        pwds.add('a', 'c', 'd')
+        pwds.add('A', 'D', 'e')
+        self.assertTrue(pwds.exists('a', 'b'))
+        self.assertTrue(pwds.exists('A', 'b'))
+        self.assertTrue(pwds.exists('a', 'B'))
+        self.assertTrue(pwds.exists('A', 'B'))
+        with self.assertRaises(KeyError):
+            pwds.add('a', 'b', 'c')
+        with self.assertRaises(KeyError):
+            pwds.add('A', 'b', 'c')
+        with self.assertRaises(KeyError):
+            pwds.add('a', 'B', 'c')
+        with self.assertRaises(KeyError):
+            pwds.add('A', 'B', 'c')
+        self.assertEqual(pwds.get('A', 'b'), ('A', 'B', 'c'))
+        self.assertEqual(pwds.get('a', 'B'), ('A', 'B', 'c'))
+        self.assertEqual(pwds.get('A', 'B'), ('A', 'B', 'c'))
+        self.assertEqual(pwds.get('a', 'c'), ('a', 'c', 'd'))
+        self.assertEqual(pwds.get('A', 'D'), ('A', 'D', 'e'))
+
     def test_rm_nonexisting(self):
         pwds = Accounts()
         with self.assertRaises(KeyError):

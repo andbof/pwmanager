@@ -130,7 +130,6 @@ def do_add(datapath, path, host, user, encpw, exist_ok):
 
 
 def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
-
     accounts = get_all_passwords(datapath)
 
     if not exist_ok and accounts.exists(host, user):
@@ -187,7 +186,8 @@ def _get_pwds(datapath, gpg, host, user):
     r = []
     for h, u in matches:
         try:
-            r.append((h, u, gpg.decrypt_file(accounts.get(h, u))))
+            (_h, _u, path) = accounts.get(h, u)
+            r.append((_h, _u, gpg.decrypt_file(path)))
         except RuntimeError:
             sys.exit('Decryption failed. Check password and availability of secret key.')
     return r
@@ -254,7 +254,7 @@ def rm_pw(cfg, args):
     accounts = get_all_passwords(cfg['global']['datapath'])
     if not accounts.exists(args.host, args.user):
         sys.exit("User {} on args.host {} does not exist".format(args.user, args.host))
-    pwfile = accounts.get(args.host, args.user)
+    (_, _, pwfile) = accounts.get(args.host, args.user)
     _rm_pw(cfg['global']['datapath'], args.host, args.user, pwfile)
     print("Password for user {} on host {} removed".format(args.user, args.host))
 
@@ -338,7 +338,7 @@ HOST_ARG = {
     'action': 'store',
     'help': "Host where the password is valid (e.g. 'host.company.com')",
     'nargs': None,
-    'type': str.lower,
+    'type': str,
     'metavar': 'HOSTFQDN',
     'default': None,
 }
@@ -347,7 +347,7 @@ USER_ARG = {
     'action': 'store',
     'help': "Username for which the password is valid (e.g. 'root')",
     'nargs': None,
-    'type': str.lower,
+    'type': str,
     'metavar': 'USER',
     'default': None,
 }
@@ -380,7 +380,7 @@ actions = {
                 ('user', {
                     'action': 'store',
                     'nargs': '?',
-                    'type': str.lower,
+                    'type': str,
                     'metavar': 'USER',
                     'help': 'Username (if omitted, list all passwords on HOSTFQDN)',
                 }),
