@@ -18,7 +18,7 @@ import time
 
 
 def get_version():
-    return '{} {}'.format(os.path.basename(sys.argv[0]), '0.1')
+    return '{} {}'.format(os.path.basename(sys.argv[0]), '0.2')
 
 
 def print_sample(cfg, args):
