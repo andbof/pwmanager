@@ -47,10 +47,20 @@ class GPG():
         r = self.gpg.import_keys(d)
         if (r.count != 1):
             raise RuntimeError("Key import failed")
-        self.encrypt_to.append(r.fingerprints[0])
+        # There doesn't seem to be a good way of getting the key metadata
+        # without reading it back after importing it
+        key = self.find_key(r.fingerprints[0])
+        self.encrypt_to.append({
+            'uid': key['uids'][0],
+            'keyid': [x['keyid'] for x in key['subkey_info'].values()],
+            'fp': r.fingerprints[0],
+        })
 
     def get_recipient_fps(self):
-        return self.encrypt_to
+        return [x['fp'] for x in self.encrypt_to]
+
+    def get_recipient_uids(self):
+        return [x['uid'] for x in self.encrypt_to]
 
     def get_num_recipients(self):
         return len(self.encrypt_to)
@@ -58,7 +68,8 @@ class GPG():
     def encrypt(self, data):
         if not self.encrypt_to:
             raise RuntimeError("No recipients to encrypt to!")
-        r = self.gpg.encrypt(data, self.encrypt_to, always_trust=True, armor=True)
+        r = self.gpg.encrypt(data, self.get_recipient_fps(),
+                always_trust=True, armor=True)
         if not r.ok:
             raise RuntimeError("Encryption failed ({})".format(r.status))
         return str(r).encode('latin-1')
