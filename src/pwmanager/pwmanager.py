@@ -161,14 +161,20 @@ def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
     return gpg.get_num_recipients()
 
 
+def get_fps_from_conf(cfg):
+    fps = cfg['global'].get('keys', '').split(',')
+    # Filter out empty entries (e.g. user has entered 'keys=fp,' or 'keys=' is
+    # missing altogether
+    return [x for x in fps if x]
+
+
 def add_pw(cfg, args, exist_ok=False):
-    fingerprints = cfg['global'].get('keys', '').split(',')
     if not 'ldap' in cfg:
         ldap = None
     else:
         ldap = cfg['ldap']
 
-    keys = get_all_pubkeys(fingerprints, ldap,
+    keys = get_all_pubkeys(get_fps_from_conf(cfg), ldap,
             cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
 
     r = _add_pw(args.host, args.user, args.password, cfg['global']['datapath'],
@@ -285,13 +291,12 @@ def _sync_pws(datapath, force, dec_gpg, enc_gpg):
 
 
 def sync_pws(cfg, args):
-    fingerprints = cfg['global'].get('keys', '').split(',')
     if not 'ldap' in cfg:
         ldap = None
     else:
         ldap = cfg['ldap']
 
-    keys = get_all_pubkeys(fingerprints, ldap,
+    keys = get_all_pubkeys(get_fps_from_conf(cfg), ldap,
             cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
 
     with GPG(use_agent=False) as enc_gpg:
