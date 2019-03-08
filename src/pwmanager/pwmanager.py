@@ -21,10 +21,6 @@ def get_version():
     return '{} {}'.format(os.path.basename(sys.argv[0]), '0.2')
 
 
-def print_sample(cfg, args):
-    config.print_sample()
-
-
 def get_pw_path(fqdn, username):
     return os.path.join(fqdn, username)
 
