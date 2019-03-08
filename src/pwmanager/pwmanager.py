@@ -210,8 +210,12 @@ def get_pwds(host, user, datapath, use_agent, gnupghome, gnupgpass):
 
 
 def get_pw(cfg, args):
-    def print_row(a, b, c):
-        print('{:20s} {:16s} {:20s}'.format(a, b, c))
+    def find_longest(l):
+        m = 0
+        for x in l:
+            if len(x) > m:
+                m = len(x)
+        return m
 
     pwds = get_pwds(args.host, args.user, cfg['global']['datapath'],
             cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'], args.gnupgpass)
@@ -224,12 +228,15 @@ def get_pw(cfg, args):
             len(pwds), 'es' if len(pwds) > 1 else '', args.host,
             "and user '{}'".format(args.user) if args.user is not None else '(all users)'))
 
-        print_row('Host', 'User', 'Password')
-        print_row('----', '----', '--------')
+        pwds.insert(0, ('Host', 'User', 'Password'))
+        pwds.insert(1, ('----', '----', '--------'))
+        wa = find_longest([x[0] for x in pwds]) + 2
+        wb = find_longest([x[1] for x in pwds]) + 2
+        wc = find_longest([x[2] for x in pwds]) + 2
+        # Passwords are stored with a trailing newline to make decryption
+        # using command line gpg easier
         for x in pwds:
-            # Passwords are stored with a trailing newline to make decryption
-            # using command line gpg easier
-            print_row(x[0], x[1], x[2].rstrip())
+            print('{:{}s} {:{}s} {:{}s}'.format(x[0], wa, x[1], wb, x[2].rstrip(), wc))
 
 
 def _rm_pw(datapath, host, user, pwfile):
