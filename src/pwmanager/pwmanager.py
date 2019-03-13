@@ -472,9 +472,8 @@ def parse_cmdline(actions):
             action='store', type=str, metavar='PASSWORD', default=None)
 
     parser.add_argument('-s', '--datapath',
-            help="Path to key data store directory (default: '{}' subdir)".format(
-                config.DEFAULT_DATA_DIR),
-            action='store', type=str, metavar='PATH', default=config.DEFAULT_DATA_DIR)
+            help='Override path to key data store directory',
+            action='store', type=str, metavar='PATH', default=None)
 
     parser.add_argument('-V', '--version',
             help='Display version and exit',
@@ -527,6 +526,7 @@ def main():
 
     if args.datapath is not None:
         cfg['global']['datapath'] = args.datapath
+
     if args.debug:
         cfg['global']['debug'] = 'yes'
     set_debug(True if cfg['global'].getboolean('debug') else False)
@@ -539,7 +539,7 @@ def main():
     if 'user' in args and args.user is not None and not validate(args.user):
         sys.exit("'{}' is not a valid username".format(args.user))
 
-    with GlobalLock(args.datapath):
+    with GlobalLock(cfg['global']['datapath']):
         return actions[args.action]['method'](cfg, args)
 
 

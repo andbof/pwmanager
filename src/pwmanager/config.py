@@ -6,7 +6,6 @@ import os
 
 DEFAULT_CONF_DIR = os.path.join(os.getenv('HOME'), '.pwmanager')
 DEFAULT_CONF = os.path.join(DEFAULT_CONF_DIR, 'pwmanager.conf')
-DEFAULT_DATA_DIR = os.path.join(DEFAULT_CONF_DIR, 'data')
 DEFAULT_GNUPG_HOME = os.path.join(os.getenv('HOME'), '.gnupg')
 
 def parse(path):
