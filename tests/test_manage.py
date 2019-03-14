@@ -147,5 +147,33 @@ class TestManage(unittest.TestCase):
         self.ensure_acc_exists('other')
 
 
+    def test_pipe(self):
+        self.ensure_acc_not_exists()
+        with self.assertRaises(KeyError):
+            pwmanager.get_unique_password(self.def_args.host,
+                None, self.def_config['global']['datapath'],
+                self.def_config['gnupg'].getboolean('use_agent'),
+                self.def_config['gnupg']['home'], self.def_args.gnupgpass
+            )
+
+        pwmanager.add_pw(self.def_config, self.def_args)
+        self.ensure_acc_exists()
+        self.assertEqual(pwmanager.get_unique_password(self.def_args.host,
+                self.def_args.user, self.def_config['global']['datapath'],
+                self.def_config['gnupg'].getboolean('use_agent'),
+                self.def_config['gnupg']['home'], self.def_args.gnupgpass
+            ), self.def_args.password)
+
+        new_args = copy.copy(self.def_args)
+        new_args.update(user='newuser')
+        pwmanager.add_pw(self.def_config, new_args)
+        with self.assertRaises(RuntimeError):
+            pwmanager.get_unique_password(self.def_args.host,
+                None, self.def_config['global']['datapath'],
+                self.def_config['gnupg'].getboolean('use_agent'),
+                self.def_config['gnupg']['home'], self.def_args.gnupgpass
+            )
+
+
 if __name__ == '__main__':
     unittest.main()

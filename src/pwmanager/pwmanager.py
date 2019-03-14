@@ -239,6 +239,34 @@ def get_pw(cfg, args):
             print('{:{}s} {:{}s} {:{}s}'.format(x[0], wa, x[1], wb, x[2].rstrip(), wc))
 
 
+def get_unique_password(host, user, datapath, use_agent, gnupghome, gnupgpass):
+    pwds = get_pwds(host, user, datapath, use_agent, gnupghome, gnupgpass)
+    if not pwds:
+        raise KeyError
+    elif len(pwds) > 1:
+        raise RuntimeError
+    else:
+        return pwds[0][2].rstrip()
+
+
+def pipe_pw(cfg, args):
+    try:
+        pwd = get_unique_password(args.host, args.user, cfg['global']['datapath'],
+                cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'], args.gnupgpass)
+    except KeyError:
+        print("No matches for host '{}' {}".format(args.host,
+            "and user '{}'".format(args.user) if args.user is not None else ''),
+            file=sys.stderr)
+        sys.exit(1)
+    except RuntimeError:
+        print("Multiple matches for host '{}' {}".format(args.host,
+            "and user '{}'".format(args.user) if args.user is not None else ''),
+            file=sys.stderr)
+        sys.exit(1)
+
+    print(pwd)
+
+
 def _rm_pw(datapath, host, user, pwfile):
     def do_rm(pwfile, host, user):
         git = Git(datapath)
@@ -409,6 +437,21 @@ actions = {
                     'type': str,
                     'metavar': 'USER',
                     'help': 'Username (if omitted, list all passwords on HOSTFQDN)',
+                }),
+            ],
+            'opt_args': {},
+        },
+        'pipe': {
+            'help': 'Get exactly one password and print on stdout (errors on stderr)',
+            'method': pipe_pw,
+            'pos_args': [
+                ('host', HOST_ARG),
+                ('user', {
+                    'action': 'store',
+                    'nargs': '?',
+                    'type': str,
+                    'metavar': 'USER',
+                    'help': 'Username',
                 }),
             ],
             'opt_args': {},
