@@ -3,6 +3,7 @@
 import base64
 from pwmanager.debug import debug
 import ldap3
+import os
 import ssl
 import sys
 
@@ -98,6 +99,9 @@ def get_ldap_group_keys(ldap, pw):
         {"firstname lastname <email@domain>": "base64 encoded pgp key"}
     for all members of the configured LDAP group.
     """
+    if not os.path.exists(ldap['ca_cert']):
+        raise RuntimeError('{} does not exist, check LDAP config'.format(ldap['ca_cert']))
+
     tls_conf = ldap3.Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2,
             ca_certs_file=ldap['ca_cert'])
     srv = ldap3.Server(ldap['server'], port=ldap.getint('port'),
