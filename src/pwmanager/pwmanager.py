@@ -371,6 +371,17 @@ def sync_pws(cfg, args):
             num, enc_gpg.get_num_recipients()))
 
 
+def update_repo(cfg, args):
+    datapath = cfg['global']['datapath']
+    git = Git(datapath)
+    with GitTransaction(git):
+        if git.has_origin():
+            git.rebase_origin_master()
+            print('Password database updated from origin')
+        else:
+            print('Cannot update: no git origin configured')
+
+
 def init_git(cfg, args):
     datapath = cfg['global']['datapath']
     if os.path.isdir(os.path.join(datapath, ".git")):
@@ -487,6 +498,12 @@ actions = {
                     'help': 'Always reencrypt all passwords (do not care about existing recipient list)',
                 },
             },
+        },
+        'update': {
+            'help': 'Update local password database from origin',
+            'method': update_repo,
+            'pos_args': [],
+            'opt_args': {},
         },
         'init': {
             'help': 'Initialize the datastore git repository',
