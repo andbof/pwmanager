@@ -128,6 +128,9 @@ latest gnupg 2.x series.
 For debian stretch you need to install ``python3-gnupg`` from
 stretch-backports.
 
+If your system defaults to gnupg 1.x and your gnupg 2.x binary is called gpg2,
+set ``gpg_path = gpg2`` in the ``[gnupg]`` section of ``pwmanager.conf``.
+
 ## RuntimeError: No recipients to encrypt to!
 
 You haven't added any key fingerprints in ``pwmanager.conf`` and haven't

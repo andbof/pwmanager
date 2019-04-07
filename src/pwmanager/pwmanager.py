@@ -50,14 +50,14 @@ def get_all_passwords(datapath):
     return accounts
 
 
-def get_all_pubkeys(fps, ldap, use_agent, gnupghome):
+def get_all_pubkeys(fps, ldap, use_agent, gpg_path, gnupghome):
     """
     Return dict {"email": ["public key in PEM format",...]}
     """
 
     r = {}
 
-    with GPG(use_agent, gnupghome) as gpg:
+    with GPG(use_agent, gpg_path, gnupghome) as gpg:
         for fp in fps:
             debug('Fetching public key with fingerprint {} (from configuration file)'.format(fp))
             key = gpg.find_key(fp)
@@ -129,7 +129,7 @@ def do_add(datapath, path, host, user, encpw, exist_ok):
             git.push_master()
 
 
-def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
+def _add_pw(host, user, password, datapath, keys, exist_ok, gpg_path, gnupghome):
     accounts = get_all_passwords(datapath)
 
     if not exist_ok and accounts.exists(host, user):
@@ -145,7 +145,7 @@ def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
 
     # We are only encrypting and using different keyrings, so do not use the
     # users gpg-agent even if we were instructed to do so.
-    with GPG(False, gnupghome) as gpg:
+    with GPG(False, gpg_path, gnupghome) as gpg:
         for email, fp_list in keys.items():
             debug('Encrypting to {} ({} key{})'.format(
                 email, len(fp_list), 's' if len(fp_list) > 1 else ''))
@@ -178,7 +178,7 @@ def add_pw(cfg, args, exist_ok=False):
             cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
 
     r = _add_pw(args.host, args.user, args.password, cfg['global']['datapath'],
-            keys, exist_ok, cfg['gnupg']['home'])
+            keys, exist_ok, cfg['gnupg']['gpg_path'], cfg['gnupg']['home'])
     print("Successfully encrypted password for {}/{} to {} recipient{}.".format(
         args.host, args.user, r, 's' if r > 1 else ''))
 
@@ -199,8 +199,8 @@ def _get_pwds(datapath, gpg, host, user):
     return r
 
 
-def get_pwds(host, user, datapath, use_agent, gnupghome, gnupgpass):
-    with GPG(use_agent, gnupghome) as gpg:
+def get_pwds(host, user, datapath, use_agent, gpg_path, gnupghome, gnupgpass):
+    with GPG(use_agent, gpg_path, gnupghome) as gpg:
         if not use_agent:
             # gpg-agent should automatically popup a different password dialog so
             # we should only ask for the password if we're not using it
@@ -238,7 +238,8 @@ def print_result(pwds, host, user):
 
 def get_pw(cfg, args):
     accs = get_pwds(args.host, args.user, cfg['global']['datapath'],
-            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'], args.gnupgpass)
+            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['gpg_path'],
+            cfg['gnupg']['home'], args.gnupgpass)
     print_result(accs, args.host, args.user)
 
 
@@ -254,8 +255,8 @@ def list_accs(cfg, args):
     print_result(accs, args.host, args.user)
 
 
-def get_unique_password(host, user, datapath, use_agent, gnupghome, gnupgpass):
-    pwds = get_pwds(host, user, datapath, use_agent, gnupghome, gnupgpass)
+def get_unique_password(host, user, datapath, use_agent, gpg_path, gnupghome, gnupgpass):
+    pwds = get_pwds(host, user, datapath, use_agent, gpg_path, gnupghome, gnupgpass)
     if not pwds:
         raise KeyError
     elif len(pwds) > 1:
@@ -267,7 +268,8 @@ def get_unique_password(host, user, datapath, use_agent, gnupghome, gnupgpass):
 def pipe_pw(cfg, args):
     try:
         pwd = get_unique_password(args.host, args.user, cfg['global']['datapath'],
-                cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'], args.gnupgpass)
+                cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['gpg_path'],
+                cfg['gnupg']['home'], args.gnupgpass)
     except KeyError:
         print("No matches for host '{}' {}".format(args.host,
             "and user '{}'".format(args.user) if args.user is not None else ''),
@@ -354,7 +356,7 @@ def sync_pws(cfg, args):
     keys = get_all_pubkeys(get_fps_from_conf(cfg), ldap,
             cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
 
-    with GPG(use_agent=False) as enc_gpg:
+    with GPG(gpg_path=cfg['gpg_path'], use_agent=False) as enc_gpg:
         for email, fps in keys.items():
             debug('Encrypting to {} ({} key{})'.format(
                 email, len(fps), 's' if len(keys) > 1 else ''))
@@ -362,6 +364,7 @@ def sync_pws(cfg, args):
                 enc_gpg.add_recipient(fp)
 
         with GPG(use_agent=cfg['gnupg'].getboolean('use_agent'),
+                gpg_path=cfg['gnupg']['gpg_path'],
                 gnupghome=cfg['gnupg']['home']) as dec_gpg:
             if not cfg['gnupg'].getboolean('use_agent'):
                 # gpg-agent should automatically popup a different password dialog so

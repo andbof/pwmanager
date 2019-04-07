@@ -20,8 +20,9 @@ class GPG():
 
     Decryption may use either the temporary directory or the real user keyring.
     """
-    def __init__(self, use_agent, gnupghome=None):
+    def __init__(self, use_agent, gpg_path, gnupghome=None):
         self.use_agent = use_agent
+        self.gpg_path = gpg_path
         self.gnupghome = gnupghome
 
     def __enter__(self):
@@ -32,7 +33,8 @@ class GPG():
         else:
             self.tempdir = None
 
-        self.gpg = gnupg.GPG(gnupghome=self.gnupghome, use_agent=self.use_agent)
+        self.gpg = gnupg.GPG(gpgbinary=self.gpg_path, gnupghome=self.gnupghome,
+                use_agent=self.use_agent)
         self.gpg.encoding = 'latin-1'
         self.encrypt_to = []
         self.passphrase = None

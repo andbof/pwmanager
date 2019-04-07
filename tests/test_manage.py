@@ -43,7 +43,7 @@ class TestManage(unittest.TestCase):
         self.old_get_all_pubkeys = pwmanager.get_all_pubkeys
         pwmanager.get_all_pubkeys = self.get_testkey
 
-        self.gpg = TestManage.setUp_with_cm(self, GPG(False, gnupghome=self.tempdir))
+        self.gpg = TestManage.setUp_with_cm(self, GPG(False, gpg_path='gpg', gnupghome=self.tempdir))
         self.gpg.add_recipient(testkey['private'])
         self.gpg.set_passphrase(testkey['passphrase'])
         self.run_proc(["/usr/bin/git", "init", "--bare", self.repodir], '/')
@@ -67,6 +67,7 @@ class TestManage(unittest.TestCase):
                 'keys': '',
         }
         self.def_config['gnupg'] = {
+                'gpg_path': 'gpg',
                 'home': self.tempdir,
                 'use_agent': False,
         }
@@ -147,13 +148,13 @@ class TestManage(unittest.TestCase):
             self.ensure_acc_exists()
         self.ensure_acc_exists('other')
 
-
     def test_pipe(self):
         self.ensure_acc_not_exists()
         with self.assertRaises(KeyError):
             pwmanager.get_unique_password(self.def_args.host,
                 None, self.def_config['global']['datapath'],
                 self.def_config['gnupg'].getboolean('use_agent'),
+                self.def_config['gnupg']['gpg_path'],
                 self.def_config['gnupg']['home'], self.def_args.gnupgpass
             )
 
@@ -162,6 +163,7 @@ class TestManage(unittest.TestCase):
         self.assertEqual(pwmanager.get_unique_password(self.def_args.host,
                 self.def_args.user, self.def_config['global']['datapath'],
                 self.def_config['gnupg'].getboolean('use_agent'),
+                self.def_config['gnupg']['gpg_path'],
                 self.def_config['gnupg']['home'], self.def_args.gnupgpass
             ), self.def_args.password)
 
@@ -172,8 +174,23 @@ class TestManage(unittest.TestCase):
             pwmanager.get_unique_password(self.def_args.host,
                 None, self.def_config['global']['datapath'],
                 self.def_config['gnupg'].getboolean('use_agent'),
+                self.def_config['gnupg']['gpg_path'],
                 self.def_config['gnupg']['home'], self.def_args.gnupgpass
             )
+
+    def test_gpg_path(self):
+        pwmanager.add_pw(self.def_config, self.def_args)
+        self.ensure_acc_exists()
+        with self.assertRaises(ValueError) as e:
+            pwmanager.get_unique_password(self.def_args.host,
+                None, self.def_config['global']['datapath'],
+                self.def_config['gnupg'].getboolean('use_agent'),
+                '/bin/false', self.def_config['gnupg']['home'],
+                self.def_args.gnupgpass
+            )
+        # We need to ensure the ValueError was actually because /bin/false
+        # returned exit code 1. Let's hope this syntax never changes.
+        self.assertTrue(str(e.exception) == 'Error invoking gpg: 1: ')
 
 
 if __name__ == '__main__':

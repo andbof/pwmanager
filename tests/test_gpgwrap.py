@@ -18,7 +18,7 @@ class TestGPG(unittest.TestCase):
         return enter
 
     def setUp(self):
-        self.gpg = TestGPG.setUp_with_cm(self, GPG(use_agent=False))
+        self.gpg = TestGPG.setUp_with_cm(self, GPG(gpg_path='gpg', use_agent=False))
         self.tempdir = tempfile.mkdtemp()
 
     def tearDown(self):

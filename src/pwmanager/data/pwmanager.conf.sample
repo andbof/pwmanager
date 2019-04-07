@@ -13,6 +13,7 @@ datapath = {CONFDIR}/data
 #keys = fingerprint1,fingerprint2
 
 [gnupg]
+#gpg_path = gpg
 home = {HOME}/.gnupg
 use_agent = yes
 

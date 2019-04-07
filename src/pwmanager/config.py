@@ -27,6 +27,9 @@ def parse(path):
     # Some keys have default values if not specified
     if not 'keys' in c['global']:
         c['global']['keys'] = ''
+    if not 'gpg_path' in c['gnupg']:
+        # 'gpg' without absolute path is the same default as python3-gnupg uses
+        c['gnupg']['gpg_path'] = 'gpg'
 
     return c
 
@@ -49,6 +52,7 @@ def print_sample(path):
         #keys = fingerprint1,fingerprint2
 
         [gnupg]
+        #gpg_path = gpg
         home = {HOME}/.gnupg
         use_agent = yes
 
