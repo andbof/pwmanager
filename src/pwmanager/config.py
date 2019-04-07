@@ -24,6 +24,10 @@ def parse(path):
                 if r in c[s][k]:
                     c[s][k] = c[s][k].replace(r, v)
 
+    # Some keys have default values if not specified
+    if not 'keys' in c['global']:
+        c['global']['keys'] = ''
+
     return c
 
 

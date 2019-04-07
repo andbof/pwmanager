@@ -64,6 +64,7 @@ class TestManage(unittest.TestCase):
         self.def_config['global'] = {
                 'debug': 'no',
                 'datapath': self.datadir,
+                'keys': '',
         }
         self.def_config['gnupg'] = {
                 'home': self.tempdir,

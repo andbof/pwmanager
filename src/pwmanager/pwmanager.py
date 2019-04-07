@@ -162,7 +162,7 @@ def _add_pw(host, user, password, datapath, keys, exist_ok, gnupghome):
 
 
 def get_fps_from_conf(cfg):
-    fps = cfg['global'].get('keys', '').split(',')
+    fps = cfg['global']['keys'].split(',')
     # Filter out empty entries (e.g. user has entered 'keys=fp,' or 'keys=' is
     # missing altogether
     return [x for x in fps if x]
