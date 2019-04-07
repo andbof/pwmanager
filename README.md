@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/andbof/pwmanager.svg?branch=master)](https://travis-ci.org/andbof/pwmanager)
+[![PyPI](https://img.shields.io/pypi/v/pwmanager.svg)](https://pypi.org/project/pwmanager)
 [![MIT licensed](https://img.shields.io/github/license/andbof/pwmanager.svg?branch=master)](https://raw.githubusercontent.com/andbof/pwmanager/master/LICENSE)
 
 # pwmanager
