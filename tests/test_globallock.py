@@ -10,6 +10,7 @@ import shutil
 import tempfile
 import unittest
 
+
 class TestGlobalLock(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
@@ -26,7 +27,6 @@ class TestGlobalLock(unittest.TestCase):
             pass
         with GlobalLock(self.tempdir):
             pass
-
 
     def test_locked(self):
         def try_lock():

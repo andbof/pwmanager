@@ -4,6 +4,7 @@ from pwmanager.debug import debug
 import fcntl
 import os
 
+
 class GlobalLock():
     def __init__(self, path):
         self.path = os.path.join(path, 'lock')

@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
+
 class Accounts():
     def __init__(self):
         """
-        self.accounts is a dict of a dict mapping hosts and users to file paths on
-        disk where the password is stored:
+        self.accounts is a dict of a dict mapping hosts and users to file paths
+        on disk where the password is stored:
         {
             'host.domain': {
                 'user1': {
@@ -25,22 +26,23 @@ class Accounts():
     def add(self, host, user, path):
         _host = host.lower()
         _user = user.lower()
-        if not _host in self.accounts:
+        if _host not in self.accounts:
             self.accounts[_host] = {}
         if _user in self.accounts[_host]:
-            raise KeyError('Adding user {} on host {} twice'.format(_user, _host))
+            raise KeyError('Adding user {} on host {} twice'.format(
+                _user, _host))
         self.accounts[_host][_user] = {
-                'raw_host': host,
-                'raw_user': user,
-                'path': path,
+            'raw_host': host,
+            'raw_user': user,
+            'path': path,
         }
 
     def exists(self, host, user):
         _host = host.lower()
         _user = user.lower()
-        if not _host in self.accounts:
+        if _host not in self.accounts:
             return False
-        if not _user in self.accounts[_host]:
+        if _user not in self.accounts[_host]:
             return False
         return True
 
@@ -74,10 +76,10 @@ class Accounts():
         _u = u.lower() if u is not None else None
         r = []
         for host, users in sorted(self.accounts.items()):
-            if _h is not None and not _h in host:
+            if _h is not None and _h not in host:
                 continue
             for user in sorted(users):
-                if _u is not None and not _u in user:
+                if _u is not None and _u not in user:
                     continue
                 r.append((host, user))
         return r

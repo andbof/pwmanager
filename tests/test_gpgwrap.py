@@ -10,6 +10,7 @@ import tempfile
 from tests.testkey import testkey
 import unittest
 
+
 class TestGPG(unittest.TestCase):
     @staticmethod
     def setUp_with_cm(tc, cm):

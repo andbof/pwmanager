@@ -7,13 +7,14 @@ import os
 import ssl
 import sys
 
+
 def get_dn_attribute(conn, dn, filtr, attr):
     """
     Return an attribute for the LDAP entry specified by dn.
     """
     debug("Getting LDAP attribute '{}' for DN={} with filter '{}'".format(attr, dn, filtr))
     r = conn.search(dn, filtr, attributes=[attr])
-    if r == False or len(conn.entries) != 1:
+    if r is False or len(conn.entries) != 1:
         raise RuntimeError("dn '{}' filter '{}' return did not return exactly one hit".format(
             dn, filtr))
 
@@ -62,7 +63,7 @@ def get_user_keydns(conn, ldap, uids):
                 ldap['user_attr'], uid, ldap['base_dn']),
             '(objectClass=person)', ldap['name_attr'])
         owner = '{} <{}>'.format(name, email)
-        if not owner in r:
+        if owner not in r:
             r[owner] = []
         r[owner].extend(key_dns)
     return r

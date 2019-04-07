@@ -5,6 +5,7 @@ import subprocess
 import sys
 import uuid
 
+
 class Git():
     def __init__(self, repo, git="/usr/bin/git", silent=False):
         self.repo_path = repo

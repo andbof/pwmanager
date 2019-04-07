@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from pwmanager.accounts import Accounts
 import unittest
 
+
 class TestAccounts(unittest.TestCase):
     def test_add_rm(self):
         pwds = Accounts()
@@ -135,7 +136,6 @@ class TestAccounts(unittest.TestCase):
             r.append(a)
 
         self.assertCountEqual(r, tests)
-
 
 
 if __name__ == '__main__':

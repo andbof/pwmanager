@@ -16,7 +16,6 @@ import sys
 import time
 
 
-
 def get_version():
     return '{} {}'.format(os.path.basename(sys.argv[0]), '1.1')
 
@@ -66,7 +65,7 @@ def get_all_pubkeys(fps, ldap, use_agent, gpg_path, gnupghome):
 
             uid = key['uids'][0]
             key_data = gpg.gpg.export_keys(fp)
-            if not uid in r:
+            if uid not in r:
                 r[uid] = []
             r[uid].append(base64.b64encode(key_data.encode('utf-8')))
 
@@ -169,7 +168,7 @@ def get_fps_from_conf(cfg):
 
 
 def add_pw(cfg, args, exist_ok=False):
-    if not 'ldap' in cfg:
+    if 'ldap' not in cfg:
         ldap = None
     else:
         ldap = cfg['ldap']
@@ -349,7 +348,7 @@ def _sync_pws(datapath, force, dec_gpg, enc_gpg):
 
 
 def sync_pws(cfg, args):
-    if not 'ldap' in cfg:
+    if 'ldap' not in cfg:
         ldap = None
     else:
         ldap = cfg['ldap']
@@ -605,8 +604,8 @@ def main():
 
     if not os.path.exists(args.config):
         sys.exit(
-                'No configuration file {}\n'.format(args.config) + \
-                'Please install and edit pwmanager.conf.sample'
+            'No configuration file {}\n'.format(args.config) +
+            'Please install and edit pwmanager.conf.sample'
         )
 
     cfg = config.parse(args.config)

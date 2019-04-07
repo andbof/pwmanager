@@ -10,6 +10,7 @@ import stat
 import subprocess
 import tempfile
 
+
 class GPG():
     """
     Provide python-gnupg with a temporary directory for gnupg settings and
@@ -127,7 +128,7 @@ class GPG():
 
         fps = []
         for keyid in keyids:
-            if not keyid in table:
+            if keyid not in table:
                 raise RuntimeError('No fingerprint for key ID {}'.format(keyid))
             fps.append(table[keyid])
         return fps

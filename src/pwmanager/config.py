@@ -8,6 +8,7 @@ DEFAULT_CONF_DIR = os.path.join(os.getenv('HOME'), '.pwmanager')
 DEFAULT_CONF = os.path.join(DEFAULT_CONF_DIR, 'pwmanager.conf')
 DEFAULT_GNUPG_HOME = os.path.join(os.getenv('HOME'), '.gnupg')
 
+
 def parse(path):
     replace = {
             '{CONFDIR}': os.path.dirname(path),
@@ -25,9 +26,9 @@ def parse(path):
                     c[s][k] = c[s][k].replace(r, v)
 
     # Some keys have default values if not specified
-    if not 'keys' in c['global']:
+    if 'keys' not in c['global']:
         c['global']['keys'] = ''
-    if not 'gpg_path' in c['gnupg']:
+    if 'gpg_path' not in c['gnupg']:
         # 'gpg' without absolute path is the same default as python3-gnupg uses
         c['gnupg']['gpg_path'] = 'gpg'
 

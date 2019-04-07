@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import unittest
 
+
 class TestGit(unittest.TestCase):
     def setUp(self):
         debug.set_debug(False)
@@ -114,7 +115,6 @@ class TestGit(unittest.TestCase):
     def test_has_origin(self):
         self.assertFalse(self.git.has_origin())
         self.assertTrue(self.gitclone.has_origin())
-
 
 
 if __name__ == '__main__':

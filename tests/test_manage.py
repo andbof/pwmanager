@@ -19,6 +19,7 @@ import unittest
 class Namespace:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
+
     def update(self, **kwargs):
         self.__dict__.update(kwargs)
 
@@ -62,14 +63,14 @@ class TestManage(unittest.TestCase):
         )
         self.def_config = configparser.ConfigParser()
         self.def_config['global'] = {
-                'debug': 'no',
-                'datapath': self.datadir,
-                'keys': '',
+            'debug': 'no',
+            'datapath': self.datadir,
+            'keys': '',
         }
         self.def_config['gnupg'] = {
-                'gpg_path': 'gpg',
-                'home': self.tempdir,
-                'use_agent': False,
+            'gpg_path': 'gpg',
+            'home': self.tempdir,
+            'use_agent': False,
         }
 
     def tearDown(self):
@@ -93,17 +94,17 @@ class TestManage(unittest.TestCase):
         if password is None:
             password = self.def_args.password
         self.assertEqual(pwmanager._get_pwds(
-                self.def_config['global']['datapath'], self.gpg,
-                self.def_args.host, self.def_args.user),
-                [(self.def_args.host, self.def_args.user,
-                    "{}\n".format(password))]
+            self.def_config['global']['datapath'], self.gpg,
+            self.def_args.host, self.def_args.user),
+            [(self.def_args.host, self.def_args.user,
+                "{}\n".format(password))]
         )
 
     def ensure_acc_not_exists(self):
         self.assertEqual(pwmanager._get_pwds(
-                self.def_config['global']['datapath'], self.gpg,
-                self.def_args.host, self.def_args.user),
-                [])
+            self.def_config['global']['datapath'], self.gpg,
+            self.def_args.host, self.def_args.user),
+            [])
 
     def test_add(self):
         # This should call pwmanager.add_pw() in the same way as it is called
