@@ -175,7 +175,8 @@ def add_pw(cfg, args, exist_ok=False):
         ldap = cfg['ldap']
 
     keys = get_all_pubkeys(get_fps_from_conf(cfg), ldap,
-            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
+            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['gpg_path'],
+            cfg['gnupg']['home'])
 
     r = _add_pw(args.host, args.user, args.password, cfg['global']['datapath'],
             keys, exist_ok, cfg['gnupg']['gpg_path'], cfg['gnupg']['home'])
@@ -354,9 +355,10 @@ def sync_pws(cfg, args):
         ldap = cfg['ldap']
 
     keys = get_all_pubkeys(get_fps_from_conf(cfg), ldap,
-            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'])
+            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['gpg_path'],
+            cfg['gnupg']['home'])
 
-    with GPG(gpg_path=cfg['gpg_path'], use_agent=False) as enc_gpg:
+    with GPG(gpg_path=cfg['gnupg']['gpg_path'], use_agent=False) as enc_gpg:
         for email, fps in keys.items():
             debug('Encrypting to {} ({} key{})'.format(
                 email, len(fps), 's' if len(keys) > 1 else ''))
@@ -512,7 +514,7 @@ actions = {
             'opt_args': {},
         },
         'sync': {
-            'help': 'Go through all passwords and reencrypt to all configured public key (and noone else)',
+            'help': 'Go through all passwords and reencrypt to all configured public keys (and noone else)',
             'method': sync_pws,
             'pos_args': [],
             'opt_args': {
