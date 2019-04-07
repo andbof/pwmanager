@@ -304,14 +304,6 @@ def replace_pw(cfg, args):
     return add_pw(cfg, args, exist_ok=True)
 
 
-def list_same(a, b):
-    if set(a) - set(b):
-        return False
-    if set(b) - set(a):
-        return False
-    return True
-
-
 def _sync_pws(datapath, force, dec_gpg, enc_gpg):
     accounts = get_all_passwords(datapath)
 
