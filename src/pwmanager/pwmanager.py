@@ -209,7 +209,7 @@ def get_pwds(host, user, datapath, use_agent, gnupghome, gnupgpass):
         return _get_pwds(datapath, gpg, host, user)
 
 
-def get_pw(cfg, args):
+def print_result(pwds, host, user):
     def find_longest(l):
         m = 0
         for x in l:
@@ -217,16 +217,13 @@ def get_pw(cfg, args):
                 m = len(x)
         return m
 
-    pwds = get_pwds(args.host, args.user, cfg['global']['datapath'],
-            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'], args.gnupgpass)
-
     if not pwds:
-        print("No matches for host '{}' {}".format(args.host,
-            "and user '{}'".format(args.user) if args.user is not None else ''))
+        print("No matches for host '{}' {}".format(host,
+            "and user '{}'".format(user) if user is not None else ''))
     else:
         print("{} match{} for host '{}' {}:\n".format(
-            len(pwds), 'es' if len(pwds) > 1 else '', args.host,
-            "and user '{}'".format(args.user) if args.user is not None else '(all users)'))
+            len(pwds), 'es' if len(pwds) > 1 else '', host,
+            "and user '{}'".format(user) if user is not None else '(all users)'))
 
         pwds.insert(0, ('Host', 'User', 'Password'))
         pwds.insert(1, ('----', '----', '--------'))
@@ -237,6 +234,24 @@ def get_pw(cfg, args):
         # using command line gpg easier
         for x in pwds:
             print('{:{}s} {:{}s} {:{}s}'.format(x[0], wa, x[1], wb, x[2].rstrip(), wc))
+
+
+def get_pw(cfg, args):
+    accs = get_pwds(args.host, args.user, cfg['global']['datapath'],
+            cfg['gnupg'].getboolean('use_agent'), cfg['gnupg']['home'], args.gnupgpass)
+    print_result(accs, args.host, args.user)
+
+
+def list_accs(cfg, args):
+    accounts = get_all_passwords(cfg['global']['datapath'])
+    matches = accounts.search(args.host, args.user)
+    accs = []
+    # matches will be all lowercase, we need to go through all accounts to find
+    # their proper capitalization
+    for h, u in matches:
+        (_h, _u, path) = accounts.get(h, u)
+        accs.append((_h, _u, ''))
+    print_result(accs, args.host, args.user)
 
 
 def get_unique_password(host, user, datapath, use_agent, gnupghome, gnupgpass):
@@ -432,6 +447,21 @@ actions = {
         'get': {
             'help': 'Get password for accounts matching host (and user) as substrings',
             'method': get_pw,
+            'pos_args': [
+                ('host', HOST_ARG),
+                ('user', {
+                    'action': 'store',
+                    'nargs': '?',
+                    'type': str,
+                    'metavar': 'USER',
+                    'help': 'Username (if omitted, list all passwords on HOSTFQDN)',
+                }),
+            ],
+            'opt_args': {},
+        },
+        'list': {
+            'help': 'List all accounts matching host and user',
+            'method': list_accs,
             'pos_args': [
                 ('host', HOST_ARG),
                 ('user', {
