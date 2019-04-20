@@ -473,7 +473,13 @@ actions = {
             'help': 'List all accounts matching host and user',
             'method': list_accs,
             'pos_args': [
-                ('host', HOST_ARG),
+                ('host', {
+                    'action': 'store',
+                    'nargs': '?',
+                    'type': str,
+                    'metavar': 'HOSTFQDN',
+                    'help': "Host where the password is valid (e.g. 'host.company.com')",
+                }),
                 ('user', {
                     'action': 'store',
                     'nargs': '?',
