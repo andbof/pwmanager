@@ -217,14 +217,14 @@ def print_result(pwds, host, user):
                 m = len(x)
         return m
 
-    if not pwds:
-        print("No matches for host '{}' {}".format(host,
-            "and user '{}'".format(user) if user is not None else ''))
-    else:
-        print("{} match{} for host '{}' {}:\n".format(
-            len(pwds), 'es' if len(pwds) > 1 else '', host,
-            "and user '{}'".format(user) if user is not None else '(all users)'))
+    print("{} match{} for {} {}{}\n".format(
+        len(pwds) if len(pwds) else 'No',
+        'es' if len(pwds) != 1 else '',
+        "host '{}'".format(host) if host is not None else 'all hosts',
+        "and user '{}'".format(user) if user is not None else '(all users)',
+        ':' if len(pwds) > 0 else ''))
 
+    if len(pwds) > 0:
         pwds.insert(0, ('Host', 'User', 'Password'))
         pwds.insert(1, ('----', '----', '--------'))
         wa = find_longest([x[0] for x in pwds]) + 2
