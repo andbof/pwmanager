@@ -330,7 +330,13 @@ def _sync_pws(datapath, force, dec_gpg, enc_gpg):
         if git.has_origin():
             git.rebase_origin_master()
         for (host, user, path) in accounts.iterate():
-            if force or enc_gpg.get_file_recipients(path) != enc_gpg.get_recipient_fps():
+            # There are three cases where the file needs to be reencrypted:
+            #   1. The force flag is set
+            #   2. The file is encrypted to a key that is no longer available,
+            #      or expected as a recipient
+            #   3. The list of recipients do not match the expected recipient list
+            (rec_fps, rec_not_found) = enc_gpg.get_file_recipients(path)
+            if force or rec_not_found or rec_fps != enc_gpg.get_recipient_fps():
                 debug('Need to reencrypt {}'.format(path))
                 encpw = enc_gpg.encrypt(dec_gpg.decrypt_file(path))
                 write_and_add(git, path, encpw, True)

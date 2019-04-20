@@ -127,11 +127,13 @@ class GPG():
                     table[d['keyid']] = key['fingerprint']
 
         fps = []
+        not_found = []
         for keyid in keyids:
-            if keyid not in table:
-                raise RuntimeError('No fingerprint for key ID {}'.format(keyid))
-            fps.append(table[keyid])
-        return fps
+            if keyid in table:
+                fps.append(table[keyid])
+            else:
+                not_found = keyid
+        return (fps, not_found)
 
     def get_file_recipients(self, path):
         """
@@ -149,4 +151,5 @@ class GPG():
                 continue
             (_, keyid) = line.split('keyid ')
             keyids.append(keyid)
+
         return self.keyids_to_fps(keyids)
