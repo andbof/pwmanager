@@ -21,6 +21,7 @@ setup(
         author_email='andreas@gazonk.org',
         description='Manage passwords in a git backed encrypted gnupg database with LDAP support',
         long_description=read(os.path.join(os.path.dirname(__file__), 'README.md')),
+        long_description_content_type='text/markdown',
         install_requires=[
             'ldap3',
             'python-gnupg >= 0.4.0',     # 0.3.9 throws "Decryption failed"
