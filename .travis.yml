@@ -4,11 +4,14 @@ python:
     - "3.4"
     - "3.5"
     - "3.6"
-# Python 3.7 is not available as standard in travis CI
+# Python 3.7 and 3.8 are not available as standard in travis CI
 matrix:
     include:
         - python: 3.7
           dist: xenial
+          sudo: true
+        - python: 3.8-dev
+          dist: bionic
           sudo: true
 
 install:
