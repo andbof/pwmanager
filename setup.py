@@ -16,7 +16,7 @@ def read(fname):
 
 setup(
         name=project_name,
-        version="1.3",
+        version="1.4",
         author='Andreas Bofjäll',
         author_email='andreas@gazonk.org',
         description='Manage passwords in a git backed encrypted gnupg database with LDAP support',
