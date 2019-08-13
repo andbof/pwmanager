@@ -344,7 +344,7 @@ def _sync_pws(datapath, force, dec_gpg, enc_gpg):
 
         if num > 0:
             uids = ''.join(['    - {}\n'.format(x) for x in enc_gpg.get_recipient_uids()])
-            git.commit("Synchronized and reencrypted {} passwords to {} recipient{}{}:\n\n{}\n\n{}".format(
+            git.commit("Synchronized and reencrypted {} passwords to {} recipient{}{}\n\n{}\n\n{}".format(
                 num, enc_gpg.get_num_recipients(), 's' if enc_gpg.get_num_recipients() > 1 else '',
                 ' (forced)' if force else '', uids, get_version())
             )
