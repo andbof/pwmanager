@@ -336,7 +336,7 @@ def _sync_pws(datapath, force, dec_gpg, enc_gpg):
             #      or expected as a recipient
             #   3. The list of recipients do not match the expected recipient list
             (rec_fps, rec_not_found) = enc_gpg.get_file_recipients(path)
-            if force or rec_not_found or rec_fps != enc_gpg.get_recipient_fps():
+            if force or rec_not_found or sorted(rec_fps) != sorted(enc_gpg.get_recipient_fps()):
                 debug('Need to reencrypt {}'.format(path))
                 encpw = enc_gpg.encrypt(dec_gpg.decrypt_file(path))
                 write_and_add(git, path, encpw, True)
