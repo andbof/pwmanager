@@ -17,7 +17,7 @@ import time
 
 
 def get_version():
-    return '{} {}'.format(os.path.basename(sys.argv[0]), '1.2')
+    return '{} {}'.format(os.path.basename(sys.argv[0]), '1.3')
 
 
 def get_pw_path(fqdn, username):
