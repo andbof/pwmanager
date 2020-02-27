@@ -58,10 +58,10 @@ def get_all_pubkeys(fps, ldap, use_agent, gpg_path, gnupghome):
 
     with GPG(use_agent, gpg_path, gnupghome) as gpg:
         for fp in fps:
-            debug('Fetching public key with fingerprint {} (from configuration file)'.format(fp))
+            debug('Fetching public key with fingerprint {} (from configuration file).'.format(fp))
             key = gpg.find_key(fp)
             if key is None:
-                sys.exit('Key with fingerprint {} not found'.format(fp))
+                sys.exit('Key with fingerprint {} not found.'.format(fp))
 
             uid = key['uids'][0]
             key_data = gpg.gpg.export_keys(fp)
@@ -303,18 +303,18 @@ def _rm_pw(datapath, host, user, pwfile):
         os.rmdir(os.path.dirname(pwfile))
     except OSError as e:
         if e.errno == errno.ENOTEMPTY:
-            debug("More accounts exist for '{}', not removing host".format(host))
+            debug("More accounts exist for '{}', not removing host.".format(host))
     else:
-        debug("No more accounts exist for '{}', host removed".format(host))
+        debug("No more accounts exist for '{}', host removed.".format(host))
 
 
 def rm_pw(cfg, args):
     accounts = get_all_passwords(cfg['global']['datapath'])
     if not accounts.exists(args.host, args.user):
-        sys.exit("User {} on args.host {} does not exist".format(args.user, args.host))
+        sys.exit("User {} on args.host {} does not exist.".format(args.user, args.host))
     (_, _, pwfile) = accounts.get(args.host, args.user)
     _rm_pw(cfg['global']['datapath'], args.host, args.user, pwfile)
-    print("Password for user {} on host {} removed".format(args.user, args.host))
+    print("Password for user {} on host {} removed.".format(args.user, args.host))
 
 
 def replace_pw(cfg, args):
@@ -384,7 +384,7 @@ def sync_pws(cfg, args):
     if num == 0:
         print("No synchronization necessary, recipient lists were correct.")
     else:
-        print("Successfully reencrypted {} passwords to {} recipients".format(
+        print("Successfully reencrypted {} passwords to {} recipients.".format(
             num, enc_gpg.get_num_recipients()))
 
 
@@ -396,11 +396,11 @@ def update_repo(cfg, args):
         if git.has_origin():
             git.rebase_origin_master()
             if git.get_head() != orig_head:
-                print('Password database updated from origin')
+                print('Password database updated from origin.')
             else:
                 print('Password database already in sync with origin, nothing updated.')
         else:
-            print('Cannot update: no git origin configured')
+            print('Cannot update: no git origin configured.')
 
 
 def init_git(cfg, args):
