@@ -49,7 +49,7 @@ class Git():
     def create_repo(path, bare=False):
         # This must be a static method since the Git() class requires (for
         # convenience) a path to an existing git repo, and for obvious reasons
-        # thers is none when running this method.
+        # there is none when running this method.
         git = Git("/")
         if not bare:
             cmdl = ["init", path]
