@@ -38,6 +38,12 @@ class TestGit(unittest.TestCase):
         with open(path, 'xb') as f:
             f.write(os.urandom(1024))
 
+    def test_get_head(self):
+        # get_head() validates the output so we only need to make sure no
+        # exception is raised when running it. It would be better to have a git
+        # repo with a previously known hash here but that's probably overkill.
+        self.git.get_head()
+
     def test_rebase(self):
         new_path = os.path.join(self.tempdir, "new")
         self.git.clone_to(new_path)

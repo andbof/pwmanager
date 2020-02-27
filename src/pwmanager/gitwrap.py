@@ -57,6 +57,19 @@ class Git():
             cmdl = ["init", "--bare", path]
         git.run_git(cmdl)
 
+    @staticmethod
+    def is_sha1(h):
+        """
+        Ensure h is a syntactically correct SHA1 hash in hexadecimal
+        """
+        if len(h) != 40:
+            return False
+        try:
+            int(h, 16)
+        except ValueError:
+            return False
+        return True
+
     def clone_to(self, path):
         self.run_git(["clone", ".", path])
 
@@ -74,6 +87,12 @@ class Git():
 
     def commit(self, msg):
         self.run_git(["commit", "-m", msg])
+
+    def get_head(self):
+        output = self.run_git(["rev-parse", "--verify", "HEAD"]).rstrip()
+        if not self.is_sha1(output):
+            raise RuntimeError('Unexpected output from git: "{}"'.format(output))
+        return output
 
     def push_master(self):
         self.run_git(["push", "origin", "master"])
