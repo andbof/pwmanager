@@ -392,9 +392,13 @@ def update_repo(cfg, args):
     datapath = cfg['global']['datapath']
     git = Git(datapath)
     with GitTransaction(git):
+        orig_head = git.get_head()
         if git.has_origin():
             git.rebase_origin_master()
-            print('Password database updated from origin')
+            if git.get_head() != orig_head:
+                print('Password database updated from origin')
+            else:
+                print('Password database already in sync with origin, nothing updated.')
         else:
             print('Cannot update: no git origin configured')
 
