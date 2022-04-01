@@ -321,7 +321,7 @@ def replace_pw(cfg, args):
     return add_pw(cfg, args, exist_ok=True)
 
 
-def _sync_pws(datapath, force, dec_gpg, enc_gpg):
+def _reencrypt_pws(datapath, force, dec_gpg, enc_gpg):
     accounts = get_all_passwords(datapath)
 
     git = Git(datapath)
@@ -353,7 +353,7 @@ def _sync_pws(datapath, force, dec_gpg, enc_gpg):
     return num
 
 
-def sync_pws(cfg, args):
+def reencrypt_pws(cfg, args):
     if 'ldap' not in cfg:
         ldap = None
     else:
@@ -378,7 +378,7 @@ def sync_pws(cfg, args):
                 # we should only ask for the password if we're not using it
                 dec_gpg.set_passphrase(args.gnupgpass)
 
-            num = attempt_retry(_sync_pws, cfg['global']['datapath'], args.force,
+            num = attempt_retry(_reencrypt_pws, cfg['global']['datapath'], args.force,
                     dec_gpg, enc_gpg)
 
     if num == 0:
@@ -458,6 +458,12 @@ actions = {
             ],
             'opt_args': {},
         },
+        'fetch': {
+            'help': 'Update local password database from origin',
+            'method': update_repo,
+            'pos_args': [],
+            'opt_args': {},
+        },
         'get': {
             'help': 'Get password for accounts matching host (and user) as substrings',
             'method': get_pw,
@@ -471,6 +477,12 @@ actions = {
                     'help': 'Username (if omitted, list all passwords on HOSTFQDN)',
                 }),
             ],
+            'opt_args': {},
+        },
+        'init': {
+            'help': 'Initialize the datastore git repository',
+            'method': init_git,
+            'pos_args': [],
             'opt_args': {},
         },
         'list': {
@@ -519,18 +531,9 @@ actions = {
             ],
             'opt_args': {},
         },
-        'rm': {
-            'help': 'Delete a password',
-            'method': rm_pw,
-            'pos_args': [
-                ('host', HOST_ARG),
-                ('user', USER_ARG),
-            ],
-            'opt_args': {},
-        },
-        'sync': {
+        'reencrypt': {
             'help': 'Go through all passwords and reencrypt to all configured public keys (and noone else)',
-            'method': sync_pws,
+            'method': reencrypt_pws,
             'pos_args': [],
             'opt_args': {
                 '-f': {
@@ -541,16 +544,13 @@ actions = {
                 },
             },
         },
-        'update': {
-            'help': 'Update local password database from origin',
-            'method': update_repo,
-            'pos_args': [],
-            'opt_args': {},
-        },
-        'init': {
-            'help': 'Initialize the datastore git repository',
-            'method': init_git,
-            'pos_args': [],
+        'rm': {
+            'help': 'Delete a password',
+            'method': rm_pw,
+            'pos_args': [
+                ('host', HOST_ARG),
+                ('user', USER_ARG),
+            ],
             'opt_args': {},
         },
 }
